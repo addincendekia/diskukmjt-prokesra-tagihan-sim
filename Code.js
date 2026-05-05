@@ -9,7 +9,7 @@ function dialogSimSchedule() {
   const activeSS = SpreadsheetApp.getActiveSpreadsheet();
   const activeSheet = activeSS.getActiveSheet();
   const activeRange = activeSheet.getActiveRange();
-  
+
   if (!activeRange) return;
 
   const dataHeader = activeSheet
@@ -19,28 +19,31 @@ function dialogSimSchedule() {
   const dataColumn = _getColumnIndex(dataHeader);
 
   const rowSelected = activeRange.getRow();
-  const rowData = activeSheet.getRange(rowSelected, 1, 1, activeSheet.getLastColumn()).getValues()[0];
+  const rowData = activeSheet
+    .getRange(rowSelected, 1, 1, activeSheet.getLastColumn())
+    .getValues()[0];
 
-  const { debitur, debiturSchedule, debiturInstallment } = _simulateTagihanDebitur(rowData, dataColumn);
+  const { debitur, debiturSchedule, debiturInstallment } =
+    _simulateTagihanDebitur(rowData, dataColumn);
 
   const html = HtmlService.createTemplateFromFile("DialogSimSchedule");
   html.props = {
     debitur: JSON.stringify({
-      cabang: debitur[dataColumn['CABANG']],
-      noLoan: debitur[dataColumn['NO LOAN']],
-      nama: debitur[dataColumn['NAMA']],
-      plafond: debitur[dataColumn['PLAFOND']],
-      tenor: debitur[dataColumn['JANGKA WAKTU']],
+      cabang: debitur[dataColumn["CABANG"]],
+      noLoan: debitur[dataColumn["NO LOAN"]],
+      nama: debitur[dataColumn["NAMA"]],
+      plafond: debitur[dataColumn["PLAFOND"]],
+      tenor: debitur[dataColumn["JANGKA WAKTU"]],
       interestTotal: debiturSchedule.interestTotal,
       dateReal: Utilities.formatDate(
-        new Date(debitur[dataColumn['MULAI']]),
+        new Date(debitur[dataColumn["MULAI"]]),
         Session.getScriptTimeZone(),
-        "dd, MMM yyyy"
+        "dd, MMM yyyy",
       ),
       dateEnd: Utilities.formatDate(
-        new Date(debitur[dataColumn['JATUH TEMPO']]),
+        new Date(debitur[dataColumn["JATUH TEMPO"]]),
         Session.getScriptTimeZone(),
-        "dd, MMM yyyy"
+        "dd, MMM yyyy",
       ),
     }),
     schedule: JSON.stringify(debiturSchedule.schedule),
@@ -49,7 +52,7 @@ function dialogSimSchedule() {
 
   SpreadsheetApp.getUi().showModalDialog(
     html.evaluate().setWidth(450).setHeight(350),
-    `Simulasi Tagihan ${debitur[dataColumn['NAMA']]}`,
+    `Simulasi Tagihan ${debitur[dataColumn["NAMA"]]}`,
   );
 }
 
@@ -63,7 +66,8 @@ function generateEffectiveSchedule({ principal, tenor, paymentInterval = 1 }) {
   // total bunga flat
   const interestTotal = ((principal * DEFAULT_RATE_SUBSIDI) / 12) * tenor;
 
-  const rateEffective = (interestTotal * 12) / paymentInterval / principalRemaining;
+  const rateEffective =
+    (interestTotal * 12) / paymentInterval / principalRemaining;
   const rateMonthly = rateEffective / 12;
 
   const schedule = [];
@@ -107,7 +111,9 @@ function generateFlatSchedule({ principal, tenor, paymentInterval = 1 }) {
   const principalInstallment = principal / installments;
 
   // bunga flat per periode (tetap)
-  const paymentInterest = Math.round(((principal * DEFAULT_RATE_SUBSIDI) / 12) * paymentInterval);
+  const paymentInterest = Math.round(
+    ((principal * DEFAULT_RATE_SUBSIDI) / 12) * paymentInterval,
+  );
 
   const interestTotal = paymentInterest * installments;
 
@@ -153,7 +159,7 @@ function findSchedule({ schedule, principalRemain, tolerance = 0.15 }) {
   return { index, ...schedule[index + 1] };
 }
 
-function simulateTagihan(month = 'JANUARI') {
+function simulateTagihan(month = "JANUARI") {
   const activeSS = SpreadsheetApp.getActiveSpreadsheet();
 
   // ✅ get last sheet safely (without mutating array)
@@ -165,11 +171,16 @@ function simulateTagihan(month = 'JANUARI') {
 
   const sourceDataColumn = _getColumnIndex(sourceDataHeader);
 
-  sourceDataHeader.splice(sourceDataColumn["KOLEKTIBILITAS"], 0, 'HITUNGAN DISKOP');
+  sourceDataHeader.splice(
+    sourceDataColumn["KOLEKTIBILITAS"],
+    0,
+    "HITUNGAN DISKOP",
+  );
 
   // ✅ fix target sheet creation
-  const targetSheet = activeSS.getSheetByName(month) || activeSS.insertSheet(month);
-  
+  const targetSheet =
+    activeSS.getSheetByName(month) || activeSS.insertSheet(month);
+
   let simData = [];
   // ✅ keep header
   simData.push(sourceDataHeader);
@@ -181,7 +192,8 @@ function simulateTagihan(month = 'JANUARI') {
     const colTenor = debitur[sourceDataColumn["JANGKA WAKTU"]];
     const colPrincipalRemain = debitur[sourceDataColumn["SISA KREDIT"]];
     const colMulai = debitur[sourceDataColumn["MULAI"]];
-    const colMulaiParsed = colMulai instanceof Date ? colMulai : new Date(colMulai);
+    const colMulaiParsed =
+      colMulai instanceof Date ? colMulai : new Date(colMulai);
 
     let colPayment = 0;
     let colPrincipalRemainUpdated = colPrincipalRemain;
@@ -239,7 +251,8 @@ function _simulateTagihanDebitur(data, dataColumn) {
   const colTenor = debitur[dataColumn["JANGKA WAKTU"]];
   const colPrincipalRemain = debitur[dataColumn["SISA KREDIT"]];
   const colMulai = debitur[dataColumn["MULAI"]];
-  const colMulaiParsed = colMulai instanceof Date ? colMulai : new Date(colMulai);
+  const colMulaiParsed =
+    colMulai instanceof Date ? colMulai : new Date(colMulai);
 
   let colPayment = 0;
   let colPrincipalRemainUpdated = colPrincipalRemain;
@@ -276,25 +289,9 @@ function _simulateTagihanDebitur(data, dataColumn) {
   debitur[dataColumn["KOLEKTIBILITAS"]] = colCollectability;
   debitur.splice(dataColumn["KOLEKTIBILITAS"], 0, colPayment); // col HITUNGAN DISKOP
 
-  return { 
-    debitur, 
-    debiturSchedule: scheduleGenerated, 
-    debiturInstallment
-  };
-}
-
-function _getColumnIndex(header) {
   return {
-    "NO LOAN": header.indexOf("NO LOAN"),
-    NAMA: header.indexOf("NAMA"),
-    MULAI: header.indexOf("MULAI"),
-    "JATUH TEMPO": header.indexOf("JATUH TEMPO"),
-    "PLAFOND": header.indexOf("PLAFOND"),
-    "JANGKA WAKTU": header.indexOf("JANGKA WAKTU"),
-    "TOTAL SUBSIDI BUNGA": header.indexOf("TOTAL SUBSIDI BUNGA"),
-    "SISA KREDIT": header.indexOf("SISA KREDIT"),
-    "HITUNGAN DISKOP": header.indexOf("TUNGGAKAN BUNGA") + 1,
-    "KOLEKTIBILITAS": header.indexOf("KOLEKTIBILITAS"),
-    KET: header.indexOf("KET"),
+    debitur,
+    debiturSchedule: scheduleGenerated,
+    debiturInstallment,
   };
 }
