@@ -1,23 +1,3 @@
-const FILE_ID_SOURCE_RECAP = '1JSvQXVhC6InSpULihdoxNGrIjsoZ5V7OplV5CptWc_c';
-
-const DEFAULT_PERIOD_YEAR = 2026;
-const RATE_SUBSIDI = 0.0925;
-
-const MONTH_MAPPED = {
-  JANUARI: 1,
-  FEBRUARI: 2,
-  MARET: 3,
-  APRIL: 4,
-  MEI: 5,
-  JUNI: 6,
-  JULI: 7,
-  AGUSTUS: 8,
-  SEPTEMBER: 9,
-  OKTOBER: 10,
-  NOVEMBER: 11,
-  DESEMBER: 12,
-};
-
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("📊 Simulation Tools")
@@ -81,7 +61,7 @@ function generateEffectiveSchedule({ principal, tenor, paymentInterval = 1 }) {
   const principalRemaining = (principal * (installments + 1)) / 2;
 
   // total bunga flat
-  const interestTotal = ((principal * RATE_SUBSIDI) / 12) * tenor;
+  const interestTotal = ((principal * DEFAULT_RATE_SUBSIDI) / 12) * tenor;
 
   const rateEffective = (interestTotal * 12) / paymentInterval / principalRemaining;
   const rateMonthly = rateEffective / 12;
@@ -127,7 +107,7 @@ function generateFlatSchedule({ principal, tenor, paymentInterval = 1 }) {
   const principalInstallment = principal / installments;
 
   // bunga flat per periode (tetap)
-  const paymentInterest = Math.round(((principal * RATE_SUBSIDI) / 12) * paymentInterval);
+  const paymentInterest = Math.round(((principal * DEFAULT_RATE_SUBSIDI) / 12) * paymentInterval);
 
   const interestTotal = paymentInterest * installments;
 
@@ -156,7 +136,7 @@ function generateFlatSchedule({ principal, tenor, paymentInterval = 1 }) {
 
   return {
     interestTotal,
-    interestRate: RATE_SUBSIDI,
+    interestRate: DEFAULT_RATE_SUBSIDI,
     schedule,
   };
 }
