@@ -1,3 +1,50 @@
+function simulateTagihan(month = "JANUARI") {
+  const activeSS = SpreadsheetApp.getActiveSpreadsheet();
+
+  // ✅ get last sheet safely (without mutating array)
+  const sheets = activeSS.getSheets();
+  const sourceSheet = sheets[sheets.length - 1];
+
+  const sourceData = sourceSheet.getDataRange().getValues();
+  const sourceDataHeader = sourceData[0];
+
+  const sourceDataColumn = _getColumnIndex(sourceDataHeader);
+
+  sourceDataHeader.splice(
+    sourceDataColumn["KOLEKTIBILITAS"],
+    0,
+    "HITUNGAN DISKOP",
+  );
+
+  // ✅ fix target sheet creation
+  const targetSheet =
+    activeSS.getSheetByName(month) || activeSS.insertSheet(month);
+
+  let simData = [];
+
+  // ✅ keep header
+  simData.push(sourceDataHeader);
+
+  for (let i = 1; i < sourceData.length; i++) {
+    const { debitur } = _simulateTagihanDebitur(
+      sourceData[i],
+      sourceDataColumn,
+    );
+
+    simData.push(debitur);
+  }
+
+  // ✅ clear + write result
+  targetSheet.clearContents();
+  targetSheet
+    .getRange(1, 1, simData.length, simData[0].length)
+    .setValues(simData);
+
+  // move sheet to last position
+  activeSS.setActiveSheet(targetSheet);
+  activeSS.moveActiveSheet(activeSS.getSheets().length);
+}
+
 function _simulateTagihanDebitur(data, dataColumn) {
   const debitur = [...data]; // clone row (array)
 

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+    </style>
+    <script src="//unpkg.com/alpinejs" defer></script>
+</head>
+
+<body>
+    <div class="position-relative" x-data="dialog">
+        <div class="mb-5">
+            <label class="form-label">Pilih Sheet</label>
+            <select class="form-select" x-model="sheetSelected">
+                <option value="">-- Pilih Sheet --</option>
+                <template x-for="sheet in sheets" :key="sheet.name">
+                    <option x-bind:value="sheet.name" x-text="sheet.name"></option>
+                </template>
+            </select>
+        </div>
+
+        <div class="position-fixed bg-white bottom-0 w-100">
+            <div class="d-flex">
+                <button type="button" class="w-100 btn btn-primary me-1" x-on:click="simulateTagihan()"
+                    x-bind:disabled="isSimulating || !sheetSelected">
+                    <div x-cloak x-show="!isSimulating">
+                        Simulate
+                    </div>
+                    <div x-show="isSimulating">Simulating...</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('dialog', () => {
+                const sheets = JSON.parse('<?= props.sheets ?>' || '[]');
+
+                return {
+                    sheets,
+                    sheetSelected: null,
+                    isSimulating: false,
+
+                    simulateTagihan() {
+                        this.isSimulating = true;
+
+                        if (!this.sheetSelected) {
+                            this.isSimulating = false;
+                            alert("Sheet belum dipilih");
+                            return;
+                        }
+
+                        google.script.run
+                            .withFailureHandler((err) => {
+                                this.isSimulating = false;
+                                alert('Gagal simulasi data');
+                            })
+                            .simulateTagihan(this.sheetSelected);
+                    },
+                }
+            })
+        })
+    </script>
+</body>
+
+</html>
