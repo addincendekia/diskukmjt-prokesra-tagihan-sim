@@ -182,53 +182,15 @@ function simulateTagihan(month = "JANUARI") {
     activeSS.getSheetByName(month) || activeSS.insertSheet(month);
 
   let simData = [];
+
   // ✅ keep header
   simData.push(sourceDataHeader);
 
   for (let i = 1; i < sourceData.length; i++) {
-    const debitur = [...sourceData[i]]; // clone row (array)
-
-    const colPlafond = debitur[sourceDataColumn["PLAFOND"]];
-    const colTenor = debitur[sourceDataColumn["JANGKA WAKTU"]];
-    const colPrincipalRemain = debitur[sourceDataColumn["SISA KREDIT"]];
-    const colMulai = debitur[sourceDataColumn["MULAI"]];
-    const colMulaiParsed =
-      colMulai instanceof Date ? colMulai : new Date(colMulai);
-
-    let colPayment = 0;
-    let colPrincipalRemainUpdated = colPrincipalRemain;
-    let colCollectability = debitur[sourceDataColumn["KOLEKTIBILITAS"]];
-
-    const scheduleParams = {
-      principal: Number(colPlafond),
-      tenor: Number(colTenor),
-      paymentInterval: 1,
-    };
-
-    // ✅ year-based logic
-    const scheduleGenerated =
-      colMulaiParsed.getFullYear() === 2023
-        ? generateFlatSchedule(scheduleParams)
-        : generateEffectiveSchedule(scheduleParams);
-
-    const debiturInstallment = findSchedule({
-      schedule: scheduleGenerated.schedule,
-      principalRemain: colPrincipalRemain,
-    });
-
-    if (debiturInstallment.index >= 0) {
-      colPayment = debiturInstallment.paymentInterest;
-      colPrincipalRemainUpdated = debiturInstallment.principalRemaining;
-
-      if (colPrincipalRemainUpdated === 0) {
-        colCollectability = "LUNAS";
-      }
-    }
-
-    // ✅ update values back into array (NOT object)
-    debitur[sourceDataColumn["SISA KREDIT"]] = colPrincipalRemainUpdated;
-    debitur[sourceDataColumn["KOLEKTIBILITAS"]] = colCollectability;
-    debitur.splice(sourceDataColumn["KOLEKTIBILITAS"], 0, colPayment); // col HITUNGAN DISKOP
+    const { debitur } = _simulateTagihanDebitur(
+      sourceData[i],
+      sourceDataColumn,
+    );
 
     simData.push(debitur);
   }
