@@ -1,3 +1,11 @@
+function _getSheetLast(activeSS) {
+  // ✅ get last sheet safely (without mutating array)
+  const sheets = activeSS.getSheets();
+  const sheet = sheets[sheets.length - 1];
+
+  return sheet;
+}
+
 function _getColumnIndex(header) {
   return {
     "NO LOAN": header.indexOf("NO LOAN"),

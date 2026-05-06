@@ -7,14 +7,32 @@ function onOpen() {
 }
 
 function dialogSim() {
+  const months = Object.keys(MONTH_MAPPED);
+
   const activeSS = SpreadsheetApp.getActiveSpreadsheet();
-  const sheets = activeSS.getSheets().map((sheet) => ({
-    name: sheet.getName(),
-  }));
+
+  const sheetLast = _getSheetLast(activeSS);
+  const sheetLastName = sheetLast.getName().toUpperCase() || "JANUARI";
+  const sheetLastIndex = MONTH_MAPPED[sheetLastName];
+  const sheetTarget = months[sheetLastIndex + 1];
+
+  const sheets = activeSS
+    .getSheets()
+    .filter((sheet) => {
+      const sheetName = sheet.getName().toUpperCase();
+      const months = ["DEBITUR AKTIF", ...months];
+
+      return months.includes(sheetName);
+    })
+    .map((sheet) => ({
+      name: sheet.getName(),
+    }));
 
   const html = HtmlService.createTemplateFromFile("ui/DialogSim");
   html.props = {
     sheets: JSON.stringify(sheets),
+    sheetLast: sheetLastName,
+    sheetTarget,
   };
 
   SpreadsheetApp.getUi().showModalDialog(

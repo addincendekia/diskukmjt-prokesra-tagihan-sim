@@ -24,6 +24,10 @@
                 </template>
             </select>
         </div>
+        <div class="mb-4">
+            <label class="form-label">Target Sheet</label>
+            <input type="text" class="form-control" readonly x-model="sheetTarget" />
+        </div>
 
         <div class="position-fixed bg-white bottom-0 w-100">
             <div class="d-flex">
@@ -45,10 +49,12 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('dialog', () => {
                 const sheets = JSON.parse('<?= props.sheets ?>' || '[]');
+                const sheetTarget = JSON.parse('<?= props.sheetTarget ?>' || '');
 
                 return {
                     sheets,
                     sheetSelected: null,
+                    sheetTarget,
                     isSimulating: false,
 
                     simulateTagihan() {

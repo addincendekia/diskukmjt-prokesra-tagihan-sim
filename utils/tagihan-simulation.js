@@ -1,10 +1,7 @@
 function simulateTagihan(month = "JANUARI") {
   const activeSS = SpreadsheetApp.getActiveSpreadsheet();
 
-  // ✅ get last sheet safely (without mutating array)
-  const sheets = activeSS.getSheets();
-  const sourceSheet = sheets[sheets.length - 1];
-
+  const sourceSheet = _getSheetLast(activeSS);
   const sourceData = sourceSheet.getDataRange().getValues();
   const sourceDataHeader = sourceData[0];
 
