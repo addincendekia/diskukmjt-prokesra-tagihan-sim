@@ -15,6 +15,7 @@ function _getColumnIndex(header) {
     PLAFOND: header.indexOf("PLAFOND"),
     "JANGKA WAKTU": header.indexOf("JANGKA WAKTU"),
     "TOTAL SUBSIDI BUNGA": header.indexOf("TOTAL SUBSIDI BUNGA"),
+    "TOTAL SUBSIDI DITERIMA": header.indexOf("TOTAL SUBSIDI DITERIMA"),
     "SISA KREDIT": header.indexOf("SISA KREDIT"),
     "HITUNGAN DISKOP": header.indexOf("TUNGGAKAN BUNGA") + 1,
     KOLEKTIBILITAS: header.indexOf("KOLEKTIBILITAS"),

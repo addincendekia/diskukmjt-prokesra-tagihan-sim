@@ -1,7 +1,7 @@
-function simulateTagihan(month = "JANUARI") {
+function simulateTagihan({ source = "DEBITUR AKTIF", month = "JANUARI" }) {
   const activeSS = SpreadsheetApp.getActiveSpreadsheet();
 
-  const sourceSheet = _getSheetLast(activeSS);
+  const sourceSheet = activeSS.getSheetByName(source);
   const sourceData = sourceSheet.getDataRange().getValues();
   const sourceDataHeader = sourceData[0];
 
@@ -26,6 +26,7 @@ function simulateTagihan(month = "JANUARI") {
     const { debitur } = _simulateTagihanDebitur(
       sourceData[i],
       sourceDataColumn,
+      source,
     );
 
     simData.push(debitur);
@@ -42,7 +43,7 @@ function simulateTagihan(month = "JANUARI") {
   activeSS.moveActiveSheet(activeSS.getSheets().length);
 }
 
-function _simulateTagihanDebitur(data, dataColumn) {
+function _simulateTagihanDebitur(data, dataColumn, source) {
   const debitur = [...data]; // clone row (array)
 
   const colPlafond = debitur[dataColumn["PLAFOND"]];
@@ -53,8 +54,10 @@ function _simulateTagihanDebitur(data, dataColumn) {
     colMulai instanceof Date ? colMulai : new Date(colMulai);
 
   let colPayment = 0;
+  let colPaymentReceived = debitur[dataColumn["TOTAL SUBSIDI DITERIMA"]] || 0;
   let colPrincipalRemainUpdated = colPrincipalRemain;
   let colCollectability = debitur[dataColumn["KOLEKTIBILITAS"]];
+  let colKet = "";
 
   const scheduleParams = {
     principal: Number(colPlafond),
@@ -71,11 +74,16 @@ function _simulateTagihanDebitur(data, dataColumn) {
   const debiturInstallment = findSchedule({
     schedule: scheduleGenerated.schedule,
     principalRemain: colPrincipalRemain,
+    matchOption:
+      source === "DEBITUR AKTIF" ? "nextschedule" : "currentschedule",
   });
 
   if (debiturInstallment.index >= 0) {
     colPayment = debiturInstallment.paymentInterest;
+    colPaymentReceived += colPayment;
+
     colPrincipalRemainUpdated = debiturInstallment.principalRemaining;
+    colKet = debiturInstallment.note || "";
 
     if (colPrincipalRemainUpdated === 0) {
       colCollectability = "LUNAS";
@@ -83,8 +91,11 @@ function _simulateTagihanDebitur(data, dataColumn) {
   }
 
   // ✅ update values back into array (NOT object)
+  debitur[dataColumn["TOTAL SUBSIDI DITERIMA"]] = colPaymentReceived;
   debitur[dataColumn["SISA KREDIT"]] = colPrincipalRemainUpdated;
   debitur[dataColumn["KOLEKTIBILITAS"]] = colCollectability;
+  debitur[dataColumn["KET"]] = colKet;
+
   debitur.splice(dataColumn["KOLEKTIBILITAS"], 0, colPayment); // col HITUNGAN DISKOP
 
   return {

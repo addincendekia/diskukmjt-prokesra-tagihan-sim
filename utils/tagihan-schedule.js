@@ -19,11 +19,15 @@ function generateEffectiveSchedule({ principal, tenor, paymentInterval = 1 }) {
     const principalBefore = principalRemain;
     const principalPayment = principalInstallment;
 
-    const paymentInterest = principalBefore * rateEffective * paymentInterval;
-    // const paymentInterest = principalBefore * rateMonthly * paymentInterval;
+    // const paymentInterest = principalBefore * rateEffective * paymentInterval;
+    const paymentInterest = principalBefore * rateMonthly * paymentInterval;
     // const paymentTotal = principalPayment + paymentInterest;
 
-    principalRemain -= principalPayment;
+    if (i === installments) {
+      principalRemain = 0;
+    } else {
+      principalRemain -= principalPayment;
+    }
 
     schedule.push({
       installment: i,
@@ -70,7 +74,11 @@ function generateFlatSchedule({ principal, tenor, paymentInterval = 1 }) {
 
     const paymentTotal = principalPayment + paymentInterest;
 
-    principalRemain -= principalPayment;
+    if (i === installments) {
+      principalRemain = 0;
+    } else {
+      principalRemain -= principalPayment;
+    }
 
     schedule.push({
       installment: i,
@@ -89,14 +97,38 @@ function generateFlatSchedule({ principal, tenor, paymentInterval = 1 }) {
   };
 }
 
-function findSchedule({ schedule, principalRemain, tolerance = 0.15 }) {
-  const index = schedule.findIndex(({ principalBefore }) => {
-    return Math.abs(principalBefore - principalRemain) < tolerance;
-  });
+function findSchedule({
+  schedule,
+  principalRemain,
+  matchOption = "currentschedule",
+  tolerance = 0.15,
+}) {
+  let note = "";
 
-  if (index < 0) return { index };
+  for (let i = 0; i < schedule.length; i++) {
+    const matchedIndex = matchOption === "nextschedule" ? i + 1 : i;
+    if (matchedIndex >= schedule.length) {
+      return { index: -1 };
+    }
 
-  if (!schedule[index + 1]) return { index };
+    const { principalBefore } = schedule[i];
+    const diff = Math.abs(principalBefore - principalRemain);
 
-  return { index, ...schedule[index + 1] };
+    if (diff < tolerance) {
+      return { index: matchedIndex, note: "", ...schedule[matchedIndex] };
+    }
+
+    const beforeStr = principalBefore.toFixed(2).toString();
+    const remainStr = principalRemain.toFixed(2).toString();
+
+    const isMatchLength = beforeStr.length === remainStr.length;
+    const isMatchPrefix = beforeStr.slice(0, 2) == remainStr.slice(0, 2);
+
+    if (isMatchLength && isMatchPrefix) {
+      note = `Found ${formatNumber(principalBefore.toFixed(2))} nearest value to ${formatNumber(principalRemain)}`;
+      return { index: matchedIndex, note, ...schedule[matchedIndex] };
+    }
+  }
+
+  return { index: -1 };
 }
