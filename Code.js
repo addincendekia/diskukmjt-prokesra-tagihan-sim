@@ -12,20 +12,22 @@ function dialogSim() {
   const activeSS = SpreadsheetApp.getActiveSpreadsheet();
 
   const sheetLast = _getSheetLast(activeSS);
-  const sheetLastName = sheetLast.getName().toUpperCase() || "JANUARI";
-  const sheetLastIndex = MONTH_MAPPED[sheetLastName];
-  const sheetTarget = months[sheetLastIndex + 1];
+  const sheetLastName = sheetLast.getName().toUpperCase();
+  const sheetLastIndex =
+    sheetLastName !== "DEBITUR AKTIF" ? MONTH_MAPPED[sheetLastName] : 0;
+
+  const sheetTarget = months[sheetLastIndex];
 
   const sheets = activeSS
     .getSheets()
     .filter((sheet) => {
       const sheetName = sheet.getName().toUpperCase();
-      const months = ["DEBITUR AKTIF", ...months];
+      const sheetAllowed = ["DEBITUR AKTIF", ...months];
 
-      return months.includes(sheetName);
+      return sheetAllowed.includes(sheetName);
     })
     .map((sheet) => ({
-      name: sheet.getName(),
+      name: sheet.getName().toUpperCase(),
     }));
 
   const html = HtmlService.createTemplateFromFile("ui/DialogSim");
@@ -60,7 +62,7 @@ function dialogSimSchedule() {
     .getValues()[0];
 
   const { debitur, debiturSchedule, debiturInstallment } =
-    _simulateTagihanDebitur(rowData, dataColumn);
+    _simulateTagihanDebitur(rowData, dataColumn, activeSheet.getName());
 
   const html = HtmlService.createTemplateFromFile("ui/DialogSimSchedule");
   html.props = {

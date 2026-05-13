@@ -15,18 +15,18 @@
 
 <body>
     <div class="position-relative" x-data="dialog">
-        <div class="mb-5">
-            <label class="form-label">Pilih Sheet</label>
+        <div class="mb-3">
+            <label class="form-label">Sumber Sheet</label>
             <select class="form-select" x-model="sheetSelected">
-                <option value="">-- Pilih Sheet --</option>
                 <template x-for="sheet in sheets" :key="sheet.name">
                     <option x-bind:value="sheet.name" x-text="sheet.name"></option>
                 </template>
             </select>
         </div>
-        <div class="mb-4">
+
+        <div class="mb-3">
             <label class="form-label">Target Sheet</label>
-            <input type="text" class="form-control" readonly x-model="sheetTarget" />
+            <input type="text" class="form-control" disabled x-model="sheetTarget" />
         </div>
 
         <div class="position-fixed bg-white bottom-0 w-100">
@@ -49,11 +49,12 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('dialog', () => {
                 const sheets = JSON.parse('<?= props.sheets ?>' || '[]');
-                const sheetTarget = JSON.parse('<?= props.sheetTarget ?>' || '');
+                const sheetLast = '<?= props.sheetLast ?>' || null;
+                const sheetTarget = '<?= props.sheetTarget ?>' || '';
 
                 return {
                     sheets,
-                    sheetSelected: null,
+                    sheetSelected: sheetLast,
                     sheetTarget,
                     isSimulating: false,
 
@@ -67,11 +68,15 @@
                         }
 
                         google.script.run
+                            .withSuccessHandler(() => {
+                                this.isSimulating = false;
+                                google.script.host.close();
+                            })
                             .withFailureHandler((err) => {
                                 this.isSimulating = false;
                                 alert('Gagal simulasi data');
                             })
-                            .simulateTagihan(this.sheetSelected);
+                            .simulateTagihan({ source: this.sheetSelected, month: this.sheetTarget });
                     },
                 }
             })
