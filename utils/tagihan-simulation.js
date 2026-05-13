@@ -74,6 +74,7 @@ function _simulateTagihanDebitur(data, dataColumn, source) {
   const debiturInstallment = findSchedule({
     schedule: scheduleGenerated.schedule,
     principalRemain: colPrincipalRemain,
+    tolerance: 5000,
     matchOption:
       source === "DEBITUR AKTIF" ? "nextschedule" : "currentschedule",
   });

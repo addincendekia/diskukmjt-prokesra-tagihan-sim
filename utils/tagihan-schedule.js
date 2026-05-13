@@ -103,19 +103,35 @@ function findSchedule({
   matchOption = "currentschedule",
   tolerance = 0.15,
 }) {
+  const DEFAULT_TOLERANCE = 0.15; // toleransi perbedaan angka (misal karena pembulatan)
+
   let note = "";
+
+  let diffToleranceCount = 0;
+  let diffLowestIndex = -1;
+  let diffLowest = Infinity;
 
   for (let i = 0; i < schedule.length; i++) {
     const matchedIndex = matchOption === "nextschedule" ? i + 1 : i;
-    if (matchedIndex >= schedule.length) {
-      return { index: -1 };
-    }
 
     const { principalBefore } = schedule[i];
     const diff = Math.abs(principalBefore - principalRemain);
 
-    if (diff < tolerance) {
+    if (diff <= DEFAULT_TOLERANCE) {
+      if (matchedIndex >= schedule.length) {
+        return { index: -1 };
+      }
+
       return { index: matchedIndex, note: "", ...schedule[matchedIndex] };
+    }
+
+    if (diff <= tolerance) {
+      diffToleranceCount++;
+
+      if (diff < diffLowest) {
+        diffLowest = diff;
+        diffLowestIndex = matchedIndex;
+      }
     }
 
     const beforeStr = principalBefore.toFixed(2).toString();
@@ -125,9 +141,18 @@ function findSchedule({
     const isMatchPrefix = beforeStr.slice(0, 2) == remainStr.slice(0, 2);
 
     if (isMatchLength && isMatchPrefix) {
+      if (matchedIndex >= schedule.length) {
+        return { index: -1 };
+      }
+
       note = `Found ${formatNumber(principalBefore.toFixed(2))} nearest value to ${formatNumber(principalRemain)}`;
       return { index: matchedIndex, note, ...schedule[matchedIndex] };
     }
+  }
+
+  if (diffLowestIndex >= 0) {
+    note = `Found ${diffToleranceCount} matches within ${formatNumber(tolerance)}, smallest diff ${formatNumber(diffLowest)}`;
+    return { index: diffLowestIndex, note, ...schedule[diffLowestIndex] };
   }
 
   return { index: -1 };
